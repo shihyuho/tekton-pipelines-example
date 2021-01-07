@@ -1,0 +1,31 @@
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: EventListener
+metadata:
+  name: listener
+spec:
+  serviceAccountName: triggers-sa
+  triggers:
+    - name: github-listener
+      interceptors:
+        - github:
+            secretRef:
+              secretName: basic-user-pass
+              secretKey: password
+            eventTypes:
+              - pull_request
+        - cel:
+            filter: "body.action in ['opened', 'synchronize', 'reopened']"
+      triggerRef: trigger
+  resources:
+    kubernetesResource:
+      spec:
+        template:
+          spec:
+            containers:
+              - resources:
+                  requests:
+                    memory: "1G"
+                    cpu: "500m"
+                  limits:
+                    memory: "2G"
+                    cpu: "1500m"

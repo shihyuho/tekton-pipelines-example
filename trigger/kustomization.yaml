@@ -1,0 +1,10 @@
+commonLabels:
+  trigger: pipelines-example
+namespace: pipelines-example
+resources:
+- binding.yaml
+- template.yaml
+- trigger.yaml
+- listener.yaml
+- rbac.yaml
+- ingress.yaml

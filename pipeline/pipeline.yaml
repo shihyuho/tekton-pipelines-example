@@ -1,0 +1,21 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: pipeline
+spec:
+  workspaces:
+  - name: maven-cache
+  resources:
+    - name: source-repo
+      type: git
+  tasks:
+  - name: build-source
+    taskRef:
+      name: build-source
+    resources:
+      inputs:
+        - name: source
+          resource: source-repo
+    workspaces:
+    - name: maven-cache
+      workspace: maven-cache

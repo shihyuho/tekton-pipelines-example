@@ -1,0 +1,23 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: pipeline-run
+  namespace: pipelines-example
+spec:
+  serviceAccountName: pipeline-bot
+  pipelineRef:
+    name: pipeline
+  workspaces:
+  - name: maven-cache
+    persistentVolumeClaim:
+      claimName: pipeline-claim
+    subPath: maven
+  resources:
+    - name: source-repo
+      resourceSpec:
+        type: git
+        params:
+          - name: revision
+            value: main
+          - name: url
+            value: https://github.com/shihyuho/tekton-pipelines-example.git

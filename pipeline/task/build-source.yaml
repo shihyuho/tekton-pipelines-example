@@ -1,0 +1,68 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: build-source
+spec:
+  params:
+    - name: skipBuildImage
+      type: string
+      description: Skip build-image step, requires imageAuthUsername and imageAuthPassword to be set.
+      default: "true"
+    - name: imageAuthUsername
+      type: string
+      description: Username for image registry
+      default: ""
+    - name: imageAuthPassword
+      type: string
+      description: Password for image registry
+      default: ""
+  workspaces:
+  - name: maven-cache
+    mountPath: /root/.m2
+  resources:
+    inputs:
+      - name: source
+        type: git
+  steps:
+    - name: generate-project
+      image: curlimages/curl
+      workingDir: $(resources.inputs.source.path)
+      command:
+        - sh
+      args:
+        - generate-spring-project.sh
+    - name: maven-compile
+      image: maven:3.6.3-openjdk-11-slim
+      workingDir: $(resources.inputs.source.path)/_example
+      command:
+        - mvn
+      args:
+        - compile
+        - -DskipTests
+        - -e
+    - name: check-style
+      image: alpine/git
+      workingDir: $(resources.inputs.source.path)/_example
+      command:
+        - /usr/bin/sh
+      args:
+        - -c 'if [ ! -z "$(git status -s)" ]; then echo "Check style failed, the following files are not well-formatted:\n$(git status -s)" && exit 1; fi'
+    - name: unit-testing
+      image: maven:3.6.3-openjdk-11-slim
+      workingDir: $(resources.inputs.source.path)/_example
+      command:
+        - mvn
+      args:
+        - test
+        - -e
+    - name: jib-image
+      image: maven:3.6.3-openjdk-11-slim
+      workingDir: $(resources.inputs.source.path)/_example
+      command:
+        - mvn
+      args:
+        - com.google.cloud.tools:jib-maven-plugin:build
+        - -Djib.to.auth.username=$(params.imageAuthUsername)
+        - -Djib.to.auth.password=$(params.imageAuthPassword)
+        - -Djib.skip=$(params.skipBuildImage)
+        - e

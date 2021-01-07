@@ -1,0 +1,9 @@
+commonLabels:
+  pipeline: example
+namespace: pipelines-example
+bases:
+- ./task
+resources:
+- serviceaccount.yaml
+- storage.yaml
+- pipeline.yaml
